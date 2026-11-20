@@ -2878,12 +2878,12 @@ function addWolfItems(queue,camX,camY,clock,viewRadius,solar){
   w.v+=Math.max(-rate*dt,Math.min(rate*dt,cruise-w.v));
   const travelBefore=w.travel||0;let moved=false;if(w.v>.4&&dt>0){moved=wolfStep(w,w.v,dt);if(!moved&&w.state==='walk'){w.v=Math.min(w.v,8);if(wolfPickTarget(w)){w.startAt=clock+.2}else{w.state='rest';w.next=clock+2}}}
   const it=w._item,moving=moved&&(w.travel||0)>travelBefore&&w.v>2.5,stride=10;
-  it.x=w.x;it.y=w.y;it.row=WOLF_ROWMAP[w.dir];it.alpha=1;
+  it.x=w.x;it.y=w.y;if(w.shownDir==null){w.shownDir=w.dir;w.dirT=w.dir;w.dirAt=clock}else if(w.dirT!==w.dir){w.dirT=w.dir;w.dirAt=clock}else if(clock-w.dirAt>=.12)w.shownDir=w.dir;it.row=WOLF_ROWMAP[w.shownDir];it.alpha=1;
   if(moving){w.travel=(w.travel||0);it.frame=WOLF_GAIT[Math.floor(w.travel/stride)%6];
    // sobe e desce a cada passada: no contato o corpo está mais baixo, no meio do passo sobe
    const sp=Math.min(1,w.v/50),amp=(.4+.5*sp)*WOLF_SCALE,ph=Math.PI*w.travel/stride,p=Math.abs(Math.sin(ph));it.bob=-amp*p;it.sway=Math.sin(ph)*.45*sp*WOLF_SCALE;it.squash=1-.035*p*sp}
   else{it.frame=1;it.bob=-.6*(1+Math.sin(clock*2.1+w.phase))*.5;it.sway=0;it.squash=1}
-  const sc=WOLF_SCALE;it.clock=clock;it.pulse=(.8+.2*Math.sin(clock*1.7+w.phase))*night;
+  if(w.bobS==null){w.bobS=it.bob;w.swS=it.sway;w.sqS=it.squash}const kk=Math.min(1,dt*12);w.bobS+=(it.bob-w.bobS)*kk;w.swS+=(it.sway-w.swS)*kk;w.sqS+=(it.squash-w.sqS)*kk;it.bob=w.bobS;it.sway=w.swS;it.squash=w.sqS;const sc=WOLF_SCALE;it.clock=clock;it.pulse=(.8+.2*Math.sin(clock*1.7+w.phase))*night;
   const eyeL=WOLF_EYES[it.row*6+it.frame]||[];it.eyes=eyeL.map(([ex,ey])=>[w.x+(ex-WOLF_AX)*sc,w.y+(ey-WOLF_AY)*sc+(it.bob||0)]);
   if(!w.trail)w.trail=[];if(moving&&it.eyes.length)w.trail.push({t:clock,pts:it.eyes});
   while(w.trail.length&&clock-w.trail[0].t>.34)w.trail.shift();if(w.trail.length>12)w.trail.shift();
