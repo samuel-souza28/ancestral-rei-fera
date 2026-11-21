@@ -139,9 +139,9 @@ const ASSETS={
  riverRocksUser:"assets/8bd71f264993.png",
  
  idle:"assets/jin_idle_v342.webp",
- walk:"assets/jin_walk_v356.webp",
- run:"assets/jin_run_v355.webp",
- jump:"assets/jin_jump_v356.webp",
+ walk:"assets/jin_walk_v342.webp",
+ run:"assets/jin_run_v357.webp",
+ jump:"assets/jin_jump_v342.webp",
  groundLush:"assets/efd51039e4f8.webp",
  groundSoil:"assets/e3478e1bcf4c.webp",
  groundMix:"assets/802bdb4acaca.webp",
@@ -2262,7 +2262,23 @@ function drawPlayerShadow(camX,camY,solar){if(!lightingEnabled||adaptiveQualityL
 const WET_SPRITE_BUF=document.createElement('canvas');
 const WET_SPRITE_CTX=WET_SPRITE_BUF.getContext('2d');
 const WET_LINE_UP=17,WET_REFLECT_H=15;
-function drawPlayerSprite(p,ctxT){const c=ctxT||ctx,br=p.breath||0;c.save();if(p.d.flip){c.translate(p.x+p.w,p.y);c.scale(-1,1)}else c.translate(p.x,p.y);c.drawImage(p.im,p.sx,p.sy,cell,cell,0,-Math.round(br*1.2),p.w,p.w);c.restore()}
+// Quadro do Jin já redimensionado para a resolução real do aparelho (feito uma vez por quadro e tamanho).
+// Desenhar o quadro de 256 px em escala fracionária, sem suavização, descartava linhas diferentes
+// a cada deslocamento: pontas do cabelo sumiam e o contorno pulsava.
+const JIN_DEV_CACHE=new WeakMap();
+function jinDeviceFrame(im,sx,sy,flip,size){
+ if(!im||!im.complete||!im.naturalWidth||size<8||size>1024)return null;
+ let m=JIN_DEV_CACHE.get(im);if(!m){m=new Map();JIN_DEV_CACHE.set(im,m)}
+ const k=sx+','+sy+','+(flip?1:0)+','+size;let c=m.get(k);if(c)return c;
+ if(m.size>256)m.clear();
+ c=document.createElement('canvas');c.width=c.height=size;const q=c.getContext('2d');
+ q.imageSmoothingEnabled=true;q.imageSmoothingQuality='high';
+ if(flip){q.translate(size,0);q.scale(-1,1)}
+ q.drawImage(im,sx,sy,cell,cell,0,0,size,size);m.set(k,c);return c}
+function drawPlayerSprite(p,ctxT){const c=ctxT||ctx,by=-Math.round((p.breath||0)*1.2),flip=!!(p.d&&p.d.flip);
+ if(!ctxT){const T=c.getTransform();if(T.b===0&&T.c===0&&T.a>0&&Math.abs(T.d-T.a)<1e-6){ // só a escala normal; reflexo (d<0) segue o caminho antigo
+ const fr=jinDeviceFrame(p.im,p.sx,p.sy,flip,Math.round(p.w*T.a));if(fr){c.save();c.setTransform(1,0,0,1,0,0);c.drawImage(fr,Math.round(T.a*p.x+T.e),Math.round(T.d*(p.y+by)+T.f));c.restore();return}}}
+ c.save();if(flip){c.translate(p.x+p.w,p.y);c.scale(-1,1)}else c.translate(p.x,p.y);c.drawImage(p.im,p.sx,p.sy,cell,cell,0,by,p.w,p.w);c.restore()}
 function drawPlayer(camX,camY){
  const p=getPlayerRenderPose(camX,camY),z=p.airborne?9:riverFootZone(player.x,player.y),now=performance.now()*.001;
  if(z===3&&player.moving&&now-(player._wetRipple||-9)>(player.run?.30:.46)){player._wetRipple=now;pushWaterRipple(player.x,player.y+1,p.w*.22,now,.85,1.5)}
