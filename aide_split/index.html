@@ -1161,7 +1161,7 @@ function update(dt){
  player.run=touch.run||keys.has('shift');
  if(hasInput){player.dir=directionIndex(v);const speed=(player.run?238:148)*riverWalkFactor(player.x,player.y);noPath=movePlayer(v.x*speed*dt,v.y*speed*dt)}
  const moved=Math.hypot(player.x-oldX,player.y-oldY);player.vx=(player.x-oldX)/dt;player.vy=(player.y-oldY)/dt;player.moving=moved>.025;player.idleT=player.moving?0:(player.idleT||0)+dt;
- if(player.moving)player.walkPhase=(player.walkPhase+moved/(player.run?26:22))%4;else if(!hasInput)player.walkPhase=0;
+ jinStep(moved,hasInput);
  player.jumpCooldown=Math.max(0,player.jumpCooldown-dt);const requestJump=touch.jump||jumpRequested;touch.jump=false;jumpRequested=false;if(requestJump&&player.jumpZ<=0&&player.jumpV<=0&&player.jumpCooldown<=0){player.jumpV=JUMP_VELOCITY;player.jumpElapsed=0;player.jumpCooldown=.16;player.jumpLandingTimer=0}
  if(player.jumpV>0||player.jumpZ>0){player.jumpElapsed+=dt;player.jumpV-=JUMP_GRAVITY*dt;player.jumpZ+=player.jumpV*dt;if(player.jumpZ<=0){player.jumpZ=0;player.jumpV=0;player.jumpLandingTimer=.13}}else if(player.jumpLandingTimer>0){player.jumpLandingTimer=Math.max(0,player.jumpLandingTimer-dt)}
  camera.x=Math.max(0,Math.min(MAP_W-vw,player.x-vw/2));camera.y=Math.max(0,Math.min(MAP_H-vh,player.y-vh*.58));
@@ -2240,21 +2240,29 @@ function treeWoodSplitBand(t){const art=TREE_ART[t.v];if(!art||!art.foliage||!tr
 function drawFallingLeaf(x,y,orientation,alpha,type){const style=TREE_FALL_STYLE[type],sprite=style>=0?FALLING_LEAF_SPRITES[style][orientation&3]:null;if(!sprite)return;ctx.save();ctx.globalAlpha=alpha;ctx.drawImage(sprite,Math.round(x)-4,Math.round(y)-4);ctx.restore()}
 function addFallingLeaves(queue,visible,camX,camY,animationClock){if(!treeAnimationEnabled)return;for(const t of visible){const style=TREE_FALL_STYLE[t.v],items=t._fallItems;if(style<0||!items||!items.length)continue;const count=items.length,cycle=TREE_FALL_CYCLE[t.v],duration=TREE_FALL_DURATION[t.v],phase=t.leafPhase||0,angle=windSpeed>0?(windDirection+180)*Math.PI/180:.20+Math.sin(animationClock*.065)*.24,baseSpeed=windSpeed>0?Math.max(10,Math.min(27,windSpeed*1.7)):12+2*Math.sin(animationClock*.19+phase*6),windX=Math.cos(angle)*baseSpeed,windY=Math.sin(angle)*baseSpeed;for(let k=0;k<count;k++){const seed=expandedHash01(t.x+k*37,t.y-k*53,71931+t.v*997),elapsed=((animationClock+phase*cycle+k*cycle/count+seed*cycle*.17)%cycle+cycle)%cycle;if(elapsed>=duration)continue;const p=elapsed/duration,startX=t.x+(seed-.5)*t.w*.48,startY=t.y-t.h*(.52+seed*.13),fallDistance=t.h*(.43+seed*.14),gust=.82+.18*Math.sin(animationClock*.31+phase*7+k),flutter=Math.sin(elapsed*(1.35+seed*.55)+phase*9+k*2.1)*(4+10*p),wx=startX+windX*elapsed*gust+flutter,wy=startY+fallDistance*(.55*p+.45*p*p)+windY*elapsed*.36+Math.sin(elapsed*1.1+seed*8)*3*p,sx=wx-camX,sy=wy-camY;if(sx<-12||sx>vw+12||sy<-12||sy>vh+12)continue;const item=items[k];item.y=wy;item.x=sx;item.sy=sy;item.orientation=Math.floor((elapsed*.62+seed*4+Math.sin(elapsed*.8+phase*5)*.16)%4);item.alpha=Math.max(0,Math.min(1,p/.11,(1-p)/.17));item.type=t.v;queue.push(item)}}}
 function jumpFrameIndex(){if(player.jumpLandingTimer>0)return 3;if(player.jumpElapsed<.11)return 0;if(player.jumpV<0&&player.jumpZ<26)return 2;return 1}
-function getPlayerRenderPose(camX,camY){const moving=player.moving,airborne=player.jumpZ>0||player.jumpV>0||player.jumpLandingTimer>0,im=airborne?img.jump:(moving?img[player.run?'run':'walk']:img.idle),d=DIRS[player.dir];const pf=moving?player.walkPhase:0,f0=airborne?jumpFrameIndex():(moving?Math.floor(pf)%4:Math.floor(time*.35)%4),f1=(f0+1)%4,mix=(!airborne&&moving)?pf-Math.floor(pf):0,step=(!airborne&&moving)?Math.abs(Math.sin(Math.PI*pf)):0,bob=-(player.run?3.2:2.2)*step*(player.run?1.2:1),sx=(d.start+f0)*cell,sy=d.row*cell,sx2=(d.start+f1)*cell,scale=.50,w=cell*scale,anchor=246,x=Math.round(player.x-camX-w/2),y=Math.round(player.y-camY-anchor*scale-player.jumpZ+bob);const bRamp=airborne||moving?0:Math.min(1,Math.max(0,((player.idleT||0)-2.5)/1)),breath=bRamp*(1+Math.sin(time*2*Math.PI/3.2))/2;return{im,d,sx,sy,sx2,mix,scale,w,anchor,x,y,airborne,breath}}
+// ===== JIN: animação (v400) =====
+// Cada quadro é mostrado inteiro, sem mistura entre dois quadros (a mistura criava contorno duplo e pulso de tamanho).
+// O passo avança pela distância percorrida, para os pés acompanharem o chão.
+// O balanço vertical é uma tabela de pixels inteiros, por quadro (sem seno).
+const JIN_SCALE=.5,JIN_ANCHOR=246,JIN_STRIDE={walk:22,run:26},JIN_BOB={walk:[0,-1,0,-1],run:[0,-2,0,-2]};
+function jinFrame(){return Math.floor(player.walkPhase)%4}
+function jinStep(moved,hasInput){if(player.moving)player.walkPhase=(player.walkPhase+moved/JIN_STRIDE[player.run?'run':'walk'])%4;else if(!hasInput)player.walkPhase=0}
+function getPlayerRenderPose(camX,camY){
+ const moving=player.moving,airborne=player.jumpZ>0||player.jumpV>0||player.jumpLandingTimer>0;
+ const im=airborne?img.jump:(moving?img[player.run?'run':'walk']:img.idle),d=DIRS[player.dir];
+ const f=airborne?jumpFrameIndex():(moving?jinFrame():Math.floor(time*.35)%4);
+ const bob=(!airborne&&moving)?(JIN_BOB[player.run?'run':'walk'][f]):0;
+ const bRamp=airborne||moving?0:Math.min(1,Math.max(0,((player.idleT||0)-2.5)/1)),breath=bRamp*(1+Math.sin(time*2*Math.PI/3.2))/2;
+ const w=cell*JIN_SCALE;
+ return{im,d,sx:(d.start+f)*cell,sy:d.row*cell,mix:0,scale:JIN_SCALE,w,anchor:JIN_ANCHOR,x:Math.round(player.x-camX-w/2),y:Math.round(player.y-camY-JIN_ANCHOR*JIN_SCALE-player.jumpZ+bob),airborne,breath}
+}
 function shadowLowRow(mask){if(mask._lowRow!==undefined)return mask._lowRow;const W=mask.width,H=mask.height;let lr=H-1;try{const d=mask.getContext('2d').getImageData(0,0,W,H).data;lr=0;for(let y=H-1;y>=0;y--){let hit=false;for(let x=0;x<W;x++){if(d[(y*W+x)*4+3]>96){hit=true;break}}if(hit){lr=y;break}}}catch(e){}mask._lowRow=lr;return lr}
 function drawShearShadow(mask,cx,baseY,w,h,solar,alpha){if(!mask||alpha<=.004)return;let dx=solar?.shadowX||0,dy=solar?.shadowY||1;const n=Math.hypot(dx,dy)||1;dx/=n;dy/=n;const k=Math.max(.22,Math.min(1.25,.55*(solar?.shadowScale||1))),W=mask.width,LR=shadowLowRow(mask),s=w/W;ctx.save();ctx.globalAlpha=Math.min(1,alpha*1.35);ctx.imageSmoothingEnabled=true;ctx.transform(s,0,-dx*k*s,-dy*k*s,cx-(W/2)*s+dx*k*s*LR,baseY+dy*k*s*LR);ctx.drawImage(mask,0,0,W,LR+1,0,0,W,LR+1);ctx.restore()}
 function drawPlayerShadow(camX,camY,solar){if(!lightingEnabled||adaptiveQualityLow)return;const s=shadowSolarFor(solar);if(!s)return;const pose=getPlayerRenderPose(camX,camY),lift=Math.max(0,player.jumpZ),lift01=1-Math.min(.70,lift/320),footX=player.x-camX,footY=player.y-camY+2;drawContactShadow(footX,footY,pose.w*.36,(s.moon?.22:.46)*lift01);const mask=spriteShadowMask(pose.im,pose.sx,pose.sy,cell,cell,pose.d.flip);drawShearShadow(mask,footX,footY,pose.w,pose.w,s,s.shadowOpacity*.92*lift01)}
 const WET_SPRITE_BUF=document.createElement('canvas');
 const WET_SPRITE_CTX=WET_SPRITE_BUF.getContext('2d');
 const WET_LINE_UP=17,WET_REFLECT_H=15;
-const PLAYER_MIX_CANVAS=document.createElement('canvas');PLAYER_MIX_CANVAS.width=PLAYER_MIX_CANVAS.height=cell;const PLAYER_MIX_CTX=PLAYER_MIX_CANVAS.getContext('2d');
-function playerMixSource(p){if(!(p.mix>.02)||p.sx2===undefined||p.sx2===p.sx)return null;const m=PLAYER_MIX_CTX;m.clearRect(0,0,cell,cell);m.globalCompositeOperation='source-over';m.drawImage(p.im,p.sx,p.sy,cell,cell,0,0,cell,cell);m.globalAlpha=p.mix;m.drawImage(p.im,p.sx2,p.sy,cell,cell,0,0,cell,cell);m.globalAlpha=1;return PLAYER_MIX_CANVAS}
-function drawPlayerSprite(p,ctxT){const c=ctxT||ctx,br=p.breath||0;c.save();if(p.d.flip){c.translate(p.x+p.w,p.y);c.scale(-1,1)}else c.translate(p.x,p.y);
- // respiração: deslocamento vertical em pixels inteiros (escala fracionária reamostrava o sprite a cada quadro e tremia)
- const src=playerMixSource(p);const im=src||p.im,sx=src?0:p.sx,sy=src?0:p.sy;
- const by=-Math.round(br*1.2);
- c.drawImage(im,sx,sy,cell,cell,0,by,p.w,p.w);
- c.restore()}
+function drawPlayerSprite(p,ctxT){const c=ctxT||ctx,br=p.breath||0;c.save();if(p.d.flip){c.translate(p.x+p.w,p.y);c.scale(-1,1)}else c.translate(p.x,p.y);c.drawImage(p.im,p.sx,p.sy,cell,cell,0,-Math.round(br*1.2),p.w,p.w);c.restore()}
 function drawPlayer(camX,camY){
  const p=getPlayerRenderPose(camX,camY),z=p.airborne?9:riverFootZone(player.x,player.y),now=performance.now()*.001;
  if(z===3&&player.moving&&now-(player._wetRipple||-9)>(player.run?.30:.46)){player._wetRipple=now;pushWaterRipple(player.x,player.y+1,p.w*.22,now,.85,1.5)}
