@@ -2250,10 +2250,10 @@ const WET_LINE_UP=17,WET_REFLECT_H=15;
 const PLAYER_MIX_CANVAS=document.createElement('canvas');PLAYER_MIX_CANVAS.width=PLAYER_MIX_CANVAS.height=cell;const PLAYER_MIX_CTX=PLAYER_MIX_CANVAS.getContext('2d');
 function playerMixSource(p){if(!(p.mix>.02)||p.sx2===undefined||p.sx2===p.sx)return null;const m=PLAYER_MIX_CTX;m.clearRect(0,0,cell,cell);m.globalCompositeOperation='source-over';m.drawImage(p.im,p.sx,p.sy,cell,cell,0,0,cell,cell);m.globalAlpha=p.mix;m.drawImage(p.im,p.sx2,p.sy,cell,cell,0,0,cell,cell);m.globalAlpha=1;return PLAYER_MIX_CANVAS}
 function drawPlayerSprite(p,ctxT){const c=ctxT||ctx,br=p.breath||0;c.save();if(p.d.flip){c.translate(p.x+p.w,p.y);c.scale(-1,1)}else c.translate(p.x,p.y);
- // respiração: uma única escala vertical ancorada nos pés (sem fatiar o sprite, sem costura)
+ // respiração: deslocamento vertical em pixels inteiros (escala fracionária reamostrava o sprite a cada quadro e tremia)
  const src=playerMixSource(p);const im=src||p.im,sx=src?0:p.sx,sy=src?0:p.sy;
- if(br>.001){const k=1+(1.8*br/128);c.translate(0,p.w);c.scale(1,k);c.drawImage(im,sx,sy,cell,cell,0,-p.w,p.w,p.w)}
- else c.drawImage(im,sx,sy,cell,cell,0,0,p.w,p.w);
+ const by=-Math.round(br*1.2);
+ c.drawImage(im,sx,sy,cell,cell,0,by,p.w,p.w);
  c.restore()}
 function drawPlayer(camX,camY){
  const p=getPlayerRenderPose(camX,camY),z=p.airborne?9:riverFootZone(player.x,player.y),now=performance.now()*.001;
