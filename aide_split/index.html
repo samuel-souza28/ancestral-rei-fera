@@ -2802,7 +2802,7 @@ function drawAmberNight(camX,camY,solar){
   const hitB=(x0,y0,x1,y1)=>x1>BX&&x0<BX+BW&&y1>BY&&y0<BY+BH;
   const occ=[];
   if(player.y>L.y){const p=getPlayerRenderPose(camX,camY);if(hitB(p.x,p.y,p.x+p.w,p.y+p.w))occ.push({k:'p',p})}
-  for(const it of WOLF_FRAME_ITEMS){if(it.y<=L.y||!it.alpha)continue;const s2=WOLF_SCALE,W=WOLF_CW*s2,H=WOLF_CH*s2,wx=it.x-camX-WOLF_AX*s2+(it.sway||0),wy=it.y-camY-WOLF_AY*s2+(it.bob||0);if(hitB(wx,wy,wx+W,wy+H))occ.push({k:'w',it,x:wx,y:wy,W,H})}
+  for(const it of WOLF_FRAME_ITEMS){if(it.y<=L.y||!it.alpha)continue;const s2=WOLF_SCALE,fr=WOLF_FR[it.row*16+it.frame]||[0,0,200,190,100,190],W=fr[2]*s2,H=fr[3]*s2,wx=it.x-camX-fr[4]*s2+(it.sway||0),wy=it.y-camY-fr[5]*s2+(it.bob||0);if(hitB(wx,wy,wx+W,wy+H))occ.push({k:'w',it,x:wx,y:wy,W,H})}
   for(const u of visibleTrees){if(u===L.t||!TREE_ART[u.v])continue;const uy=u.v>=AMBER_V0?amberSortY(u):u.y;if(uy<=L.y)continue;const ul=u.x-camX-u.w/2,ut=u.y-camY-u.h;if(hitB(ul,ut,ul+u.w,ut+u.h))occ.push({k:'t',u,ul,ut})}
   // seres da cena na frente da árvore: manchas pequenas, uma por ser
   for(const it of sceneQueue){
@@ -2838,20 +2838,53 @@ function drawAmberNight(camX,camY,solar){
 
 // ===== lobo (v221) =====
 // atlas 4 quadros × 8 direções (linhas: N, NE, L, SE, S, SO, O, NO); célula 211×191; pés em (105,187)
-const WOLF_B64='assets/wolf_b64.webp';
+const WOLF_B64='assets/wolf_v343.webp';
 const WOLF_IMG=new Image();WOLF_IMG.src=WOLF_B64;
-const WOLF_CW=216,WOLF_CH=212,WOLF_AX=108,WOLF_AY=206,WOLF_SCALE=1.0,WOLF_COUNT=2,WOLF_FLEE_R=170,WOLF_FLEE_OUT=300,WOLF_SEP=300;
+// v343: atlas empacotado; WOLF_FR[dir*16+pose]=[sx,sy,w,h,âncoraX,âncoraY] (âncora = pata no chão)
+const WOLF_FR=[[646,783,124,184,62,184],[772,783,94,184,47,184],[868,783,131,184,66,184],[606,1156,86,178,43,178],[370,970,95,183,48,183],[800,970,107,182,54,182],[167,593,109,187,54,187],[278,593,105,187,52,187],[787,593,110,186,55,186],[899,593,115,186,58,186],[796,401,119,188,60,188],[917,401,118,188,59,188],[1016,593,108,186,54,186],[414,1340,160,172,80,172],[231,1686,187,157,94,157],[0,1999,187,120,94,120],[372,401,212,189,106,189],[1126,593,209,186,104,186],[1037,401,203,188,102,188],[909,970,197,182,98,182],[1810,0,199,196,100,196],[1290,203,191,193,90,193],[1059,0,173,197,80,197],[342,0,165,199,74,199],[176,203,185,195,90,195],[363,203,190,195,94,195],[555,203,186,195,94,195],[743,203,185,195,94,195],[1108,970,198,182,108,182],[1587,1515,215,161,140,161],[658,1846,226,148,150,148],[420,1999,229,108,138,108],[420,1686,231,156,116,156],[653,1686,229,156,114,156],[1574,1686,230,152,115,152],[1113,1686,228,154,114,154],[1534,1340,229,169,114,169],[1171,1156,218,174,96,174],[1308,970,181,182,70,182],[1491,970,163,182,58,182],[1337,593,166,186,64,186],[1656,970,171,182,72,182],[694,1156,171,178,72,178],[867,1156,167,178,72,178],[766,1340,188,171,104,171],[0,1846,214,151,136,151],[1549,1846,219,136,140,136],[871,1999,225,101,146,101],[1765,1340,210,169,105,169],[963,1515,205,165,102,165],[0,1515,202,169,101,169],[1170,1515,200,165,100,165],[385,593,199,187,100,187],[467,970,199,183,98,183],[1829,970,174,182,82,182],[0,401,167,190,82,190],[0,783,170,185,90,185],[1001,783,176,184,94,184],[1179,783,176,184,94,184],[1357,783,175,184,92,184],[0,203,174,196,90,196],[339,1515,213,168,144,168],[1107,1846,219,143,150,143],[1098,1999,219,101,150,101],[1391,1156,132,174,66,174],[956,1340,132,171,66,171],[1744,1156,134,173,67,173],[204,1515,133,169,66,169],[172,783,132,185,66,185],[0,1156,136,182,68,182],[1534,783,133,184,66,184],[668,970,130,183,65,183],[138,1156,127,182,64,182],[306,783,139,185,70,185],[1505,593,139,186,70,186],[1646,593,139,186,70,186],[1036,1156,133,176,66,176],[1806,1686,153,152,76,152],[1770,1846,169,136,84,136],[1545,1999,172,96,86,96],[0,1340,209,173,104,173],[554,1515,205,168,102,168],[211,1340,201,173,100,173],[761,1515,200,168,100,168],[1483,203,200,191,100,191],[586,593,199,187,101,187],[1787,593,174,186,91,186],[1122,203,166,194,85,194],[1242,401,169,188,82,188],[1413,401,175,188,81,188],[1590,401,175,188,83,188],[1767,401,174,188,82,188],[167,0,173,200,86,200],[1090,1340,212,170,69,170],[886,1846,219,145,69,145],[651,1999,218,103,69,103],[1804,1515,231,158,116,158],[0,1686,229,158,114,158],[1343,1686,229,154,114,154],[884,1686,227,156,114,156],[1304,1340,228,170,114,170],[1525,1156,217,174,119,174],[1669,783,179,184,110,184],[1850,783,162,184,104,184],[0,593,165,188,100,188],[0,970,170,184,98,184],[267,1156,170,180,98,180],[439,1156,165,180,92,180],[576,1340,188,172,84,172],[216,1846,214,151,77,151],[1328,1846,219,138,77,138],[1319,1999,224,101,77,101],[1685,203,212,191,106,191],[586,401,208,189,104,189],[169,401,201,190,100,190],[172,970,196,184,98,184],[1234,0,200,197,100,197],[930,203,190,195,100,195],[509,0,171,199,92,199],[0,0,165,201,91,201],[1436,0,185,197,94,197],[682,0,189,198,95,198],[1623,0,185,197,92,197],[873,0,184,198,91,198],[447,783,197,185,90,185],[1372,1515,213,163,75,163],[432,1846,224,150,75,150],[189,1999,229,109,91,109]];
+const WOLF_SCALE=1.0,WOLF_COUNT=2,WOLF_FLEE_R=170,WOLF_FLEE_OUT=300,WOLF_SEP=300;
 const WOLVES=[];
 const WOLF_EYE_LIGHTS=[];
-const WOLF_EYES=[[],[],[],[],[],[],[[183,58]],[[183,58]],[[183,59]],[[183,58]],[[184,59]],[[184,59]],[[95,94],[118,94]],[[95,94],[118,94]],[[95,94],[118,94]],[[95,94],[118,94]],[[95,94],[118,94]],[[95,94],[118,94]],[[33,58]],[[33,58]],[[33,59]],[[33,58]],[[32,59]],[[32,59]]];
+const WOLF_EYES=[[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[[76.7,-167.3]],[[74.0,-167.5]],[],[],[],[],[[56.0,-58.5]],[[88.5,-124.7]],[[89.5,-124.5]],[[89.1,-120.6]],[[88.4,-122.7]],[[88.7,-137.8]],[[94.3,-142.3]],[[84.2,-151.5]],[[77.0,-151.4]],[[74.9,-156.1]],[[70.7,-154.0]],[[68.8,-155.3]],[[66.0,-159.0],[63.0,-157.0]],[[56.5,-138.0]],[[44.5,-117.8]],[[39.9,-103.0]],[[39.0,-53.0]],[[78.0,-131.3]],[[75.3,-128.0]],[[73.7,-131.0]],[[74.0,-126.5]],[[69.5,-147.5]],[],[[62.0,-145.5]],[[55.1,-152.1]],[],[[48.9,-147.3]],[[50.7,-148.4]],[[51.0,-147.1]],[[52.7,-158.0]],[[22.8,-127.8]],[[26.5,-103.5],[23.5,-105.0]],[[27.0,-50.0]],[[33.5,-136.8],[13.2,-136.2]],[[32.9,-133.8],[12.8,-133.5]],[[33.6,-135.4],[13.2,-135.2]],[[13.5,-131.2],[33.9,-131.8]],[[33.9,-147.6],[13.6,-147.6]],[[35.3,-145.0],[14.7,-144.7]],[[34.8,-146.6],[13.5,-146.8]],[[10.4,-145.9],[31.0,-146.1]],[[30.9,-144.9],[10.2,-144.2]],[[34.4,-148.8],[15.5,-146.0]],[[14.6,-145.4],[33.7,-152.8]],[[33.6,-153.0],[14.2,-147.0]],[[34.5,-138.8],[12.8,-138.8]],[[14.7,-114.6],[35.8,-114.7]],[[38.2,-97.4],[18.2,-97.4]],[[15.3,-48.1],[38.3,-48.0]],[[-78.5,-134.8]],[[-75.6,-130.1]],[[-73.5,-134.9]],[[-75.5,-129.0]],[[-71.5,-151.5]],[[-72.0,-147.4]],[[-62.5,-149.0]],[[-57.0,-155.5]],[[-53.0,-151.6]],[[-49.3,-150.3]],[[-52.8,-151.2]],[[-51.3,-150.3]],[[-55.7,-160.6]],[[-24.9,-130.3]],[],[[-28.0,-51.7]],[[-89.8,-126.8]],[[-89.2,-126.5]],[[-89.6,-122.4]],[[-89.5,-124.5]],[[-88.7,-138.9]],[[-93.8,-142.9]],[[-83.5,-153.5]],[[-78.0,-153.4]],[[-74.9,-158.0]],[[-71.3,-156.0]],[[-68.7,-158.1]],[[-63.5,-160.2]],[[-57.3,-139.4]],[[-43.8,-119.0]],[[-38.8,-104.1]],[[-39.2,-52.6]],[],[],[],[],[],[],[],[],[],[[-78.0,-169.5]],[],[],[],[],[],[[-56.7,-59.3]]];
 const WOLF_GLOW=(()=>{const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d'),r=g.createRadialGradient(24,24,0,24,24,24);r.addColorStop(0,'rgba(255,255,235,1)');r.addColorStop(.22,'rgba(255,236,150,1)');r.addColorStop(.5,'rgba(255,200,70,.6)');r.addColorStop(1,'rgba(255,160,20,0)');g.fillStyle=r;g.fillRect(0,0,48,48);return c})();
 function wolfGlow(sx,sy,R,a){if(a<=.01)return;ctx.globalAlpha=a;ctx.drawImage(WOLF_GLOW,Math.round(sx-R),Math.round(sy-R),R*2,R*2)}
-const WOLF_GAIT=[0,1,2,3,4,5];
-// 8 direções do movimento -> 4 linhas do atlas (costas, lado dir., frente, lado esq.); diagonais usam a vista de lado
-const WOLF_ROWMAP=[0,1,1,1,2,3,3,3];
+const WOLF_GAIT=[0,1,2,3];
+// 8 direções desenhadas: linha do atlas = direção (0 N, 1 NE, 2 L, 3 SE, 4 S, 5 SO, 6 O, 7 NO)
+const WOLF_ROWMAP=[0,1,2,3,4,5,6,7];
+// poses: 0-3 andar, 4 em pé, 5 agachando, 6-8 sentado, 9-11 coçando, 12 deitando, 13-14 deitado, 15 dormindo
+const WOLF_P={STAND:4,CROUCH:5,SIT:6,SIT2:7,SITUP:8,SCR0:9,SCR1:10,SCR2:11,LIEDOWN:12,LIE:13,LIE2:14,SLEEP:15};
+const WOLF_HOLD=[4,6,13,15]; // pose parada de cada nível: 0 em pé, 1 sentado, 2 deitado, 3 dormindo
+function wolfPush(w,clock,frames,step){let t=Math.max(clock,w.qEnd||0);for(const f of frames){t+=step;w.q.push({f,until:t})}w.qEnd=t}
+function wolfBusy(w,clock){return w.q.length>0&&w.q[w.q.length-1].until>clock}
+function wolfCurFrame(w,clock){while(w.q.length&&w.q[0].until<=clock)w.q.shift();return w.q.length?w.q[0].f:w.hold}
+// muda de nível um degrau por vez (em pé <-> sentado <-> deitado <-> dormindo), com o quadro de transição
+function wolfSetLevel(w,clock,lv){const P=WOLF_P,s=.16;let guard=8;
+ while(w.level!==lv&&guard-->0){
+  if(w.level===0){wolfPush(w,clock,[P.CROUCH],s);w.level=1}
+  else if(w.level===1&&lv>1){wolfPush(w,clock,[P.LIEDOWN],s*1.4);w.level=2}
+  else if(w.level===1){wolfPush(w,clock,[P.CROUCH],s);w.level=0}
+  else if(w.level===2&&lv>2){wolfPush(w,clock,[P.LIE2],s*2);w.level=3}
+  else if(w.level===2){wolfPush(w,clock,[P.LIEDOWN],s*1.4);w.level=1}
+  else{wolfPush(w,clock,[P.LIE2],s*2);w.level=2}}
+ w.hold=WOLF_HOLD[w.level]}
+// o que fazer quando está parado: andar só a partir de em pé; sentar, coçar, deitar e dormir em sequência natural
+function wolfRestDecide(w,clock){const r=Math.random(),P=WOLF_P,R=(a,b)=>a+Math.random()*(b-a);
+ if(w.level===0){if(r<.62&&wolfPickTarget(w)){w.state='walk';w.startAt=clock+.35;return}
+  if(r<.9){wolfSetLevel(w,clock,1);w.next=clock+R(4,8);return}
+  w.next=clock+R(1.5,3);return}
+ if(w.level===1){
+  if(r<.25){wolfPush(w,clock,[P.SCR0,P.SCR1,P.SCR2,P.SCR1,P.SCR2,P.SCR1,P.SCR2,P.SCR0],.13);w.next=w.qEnd+R(2,4);return}
+  if(r<.5){wolfSetLevel(w,clock,2);w.next=clock+R(6,11);return}
+  if(r<.9){wolfSetLevel(w,clock,0);w.next=clock+R(1,2.5);return}
+  wolfPush(w,clock,[P.SITUP],1.6);w.next=w.qEnd+R(2,5);return}
+ if(w.level===2){
+  if(r<.3){wolfSetLevel(w,clock,3);w.next=clock+R(10,18);return}
+  if(r<.55){wolfPush(w,clock,[P.LIE2],2.2);w.next=w.qEnd+R(3,6);return}
+  wolfSetLevel(w,clock,1);w.next=clock+R(3,6);return}
+ wolfSetLevel(w,clock,2);w.next=clock+R(4,8)}
 function wolfSmooth(a,b,v){const t=Math.max(0,Math.min(1,(v-a)/(b-a)));return t*t*(3-2*t)}
 function wolfClear(w,x,y){for(const o of WOLVES){if(o===w||!o.placed)continue;if((o.x-x)**2+(o.y-y)**2<WOLF_SEP*WOLF_SEP)return false}return true}
-function wolfPlace(w,minD,maxD){for(let k=0;k<30;k++){const a=Math.random()*Math.PI*2,d=minD+Math.random()*(maxD-minD),x=player.x+Math.cos(a)*d,y=player.y+Math.sin(a)*d;if(griloSpotOk(x,y)&&wolfClear(w,x,y)){w.x=x;w.y=y;w.state='rest';w.next=0;w.lastT=null;w.placed=true;return true}}return false}
+function wolfPlace(w,minD,maxD){for(let k=0;k<30;k++){const a=Math.random()*Math.PI*2,d=minD+Math.random()*(maxD-minD),x=player.x+Math.cos(a)*d,y=player.y+Math.sin(a)*d;if(griloSpotOk(x,y)&&wolfClear(w,x,y)){w.x=x;w.y=y;w.state='rest';w.next=0;w.lastT=null;w.placed=true;w.level=0;w.hold=WOLF_P.STAND;w.q=[];w.qEnd=0;w.dir=Math.floor(Math.random()*8);w.shownDir=w.dir;return true}}return false}
 function wolfDirOf(dx,dy){const a=Math.atan2(dx,-dy);return((Math.round(a/(Math.PI/4))%8)+8)%8}
 function wolfStep(w,dist,dt){const dx=w.tx-w.x,dy=w.ty-w.y,l=Math.hypot(dx,dy);if(l<2)return false;const s=Math.min(l,dist*dt),nx=w.x+dx/l*s,ny=w.y+dy/l*s;if(!griloSpotOk(nx,ny)||!wolfClear(w,nx,ny))return false;w.x=nx;w.y=ny;w.dir=wolfDirOf(dx,dy);w.travel=(w.travel||0)+s;return true}
 let WOLF_FRAME_ITEMS=[];
@@ -2859,7 +2892,7 @@ function addWolfItems(queue,camX,camY,clock,viewRadius,solar){
  WOLF_EYE_LIGHTS.length=0;WOLF_FRAME_ITEMS=[];
  const night=wolfSmooth(.35,.6,solar?.nightness??0);
  if(!WOLF_IMG.complete||!WOLF_IMG.naturalWidth)return;
- while(WOLVES.length<WOLF_COUNT){const w={x:0,y:0,state:'rest',dir:4,tx:0,ty:0,next:0,lastT:null,placed:false,hidAt:null,nextSpawn:clock+20+Math.random()*40,alpha:0,v:0,startAt:0,travel:0,phase:Math.random()*6.28,_item:{kind:9,ref:null,x:0,y:0,priority:1,frame:1,row:4,alpha:0,bob:0,squash:1}};w._item.ref=w;WOLVES.push(w)}
+ while(WOLVES.length<WOLF_COUNT){const w={x:0,y:0,state:'rest',dir:4,level:0,hold:4,q:[],qEnd:0,tx:0,ty:0,next:0,lastT:null,placed:false,hidAt:null,nextSpawn:clock+20+Math.random()*40,alpha:0,v:0,startAt:0,travel:0,phase:Math.random()*6.28,_item:{kind:9,ref:null,x:0,y:0,priority:1,frame:1,row:4,alpha:0,bob:0,squash:1}};w._item.ref=w;WOLVES.push(w)}
  for(const w of WOLVES){
   if(night<.5){w.placed=false;w.alpha=0;w.v=0;w.hidAt=null;continue}
   w.alpha=1;
@@ -2869,22 +2902,24 @@ function addWolfItems(queue,camX,camY,clock,viewRadius,solar){
   const dt=w.lastT==null?0:Math.min(.1,clock-w.lastT);w.lastT=clock;
   const dist=Math.hypot(w.x-player.x,w.y-player.y);
   // comportamento pacífico: o lobo não reage ao Jin
-  if(w.state==='walk'){if(Math.hypot(w.tx-w.x,w.ty-w.y)<2){w.state='rest';w.next=clock+3+Math.random()*5}}
-  else if(clock>=w.next){if(wolfPickTarget(w)){w.state='walk';w.startAt=clock+.35}else w.next=clock+1.5}
+  if(w.state==='walk'){if(Math.hypot(w.tx-w.x,w.ty-w.y)<2){w.state='rest';w.level=0;w.hold=WOLF_P.STAND;w.next=clock+2+Math.random()*3}}
+  else if(clock>=w.next&&!wolfBusy(w,clock))wolfRestDecide(w,clock);
   // velocidade: acelera até a velocidade de cruzeiro e desacelera ao parar (sem salto)
   const turning=w.state==='walk'&&clock<w.startAt;
   const cruise=w.state==='walk'&&!turning?50:0;
   const rate=cruise>w.v?70:60;
   w.v+=Math.max(-rate*dt,Math.min(rate*dt,cruise-w.v));
-  const travelBefore=w.travel||0;let moved=false;if(w.v>.4&&dt>0){moved=wolfStep(w,w.v,dt);if(!moved&&w.state==='walk'){w.v=Math.min(w.v,8);if(wolfPickTarget(w)){w.startAt=clock+.2}else{w.state='rest';w.next=clock+2}}}
-  const it=w._item,moving=moved&&(w.travel||0)>travelBefore&&w.v>2.5,stride=10;
+  const travelBefore=w.travel||0;let moved=false;if(w.v>.4&&dt>0){moved=wolfStep(w,w.v,dt);if(!moved&&w.state==='walk'){w.v=Math.min(w.v,8);if(wolfPickTarget(w)){w.startAt=clock+.2}else{w.state='rest';w.level=0;w.hold=WOLF_P.STAND;w.next=clock+2}}}
+  const it=w._item,moving=moved&&(w.travel||0)>travelBefore&&w.v>2.5,stride=12;
   it.x=w.x;it.y=w.y;if(w.shownDir==null){w.shownDir=w.dir;w.dirT=w.dir;w.dirAt=clock}else if(w.dirT!==w.dir){w.dirT=w.dir;w.dirAt=clock}else if(clock-w.dirAt>=.12)w.shownDir=w.dir;it.row=WOLF_ROWMAP[w.shownDir];it.alpha=1;
-  if(moving){w.travel=(w.travel||0);it.frame=WOLF_GAIT[Math.floor(w.travel/stride)%6];
+  if(moving){w.travel=(w.travel||0);it.frame=WOLF_GAIT[Math.floor(w.travel/stride)%4];
    // sobe e desce a cada passada: no contato o corpo está mais baixo, no meio do passo sobe
    const sp=Math.min(1,w.v/50),amp=(.4+.5*sp)*WOLF_SCALE,ph=Math.PI*w.travel/stride,p=Math.abs(Math.sin(ph));it.bob=-amp*p;it.sway=Math.sin(ph)*.45*sp*WOLF_SCALE;it.squash=1-.035*p*sp}
-  else{it.frame=1;it.bob=-.6*(1+Math.sin(clock*2.1+w.phase))*.5;it.sway=0;it.squash=1}
+  else{let f=w.state==='walk'?WOLF_P.STAND:wolfCurFrame(w,clock);
+   if(w.state!=='walk'&&!w.q.length&&w.level===1&&Math.floor((clock+w.phase*3)/2.7)%5===4)f=WOLF_P.SIT2; // pequena variação sentado
+   it.frame=f;const br=w.level>=2?.35:.6,sp=w.level>=3?1.2:2.1;it.bob=-br*(1+Math.sin(clock*sp+w.phase))*.5;it.sway=0;it.squash=1}
   if(w.bobS==null){w.bobS=it.bob;w.swS=it.sway;w.sqS=it.squash}const kk=Math.min(1,dt*12);w.bobS+=(it.bob-w.bobS)*kk;w.swS+=(it.sway-w.swS)*kk;w.sqS+=(it.squash-w.sqS)*kk;it.bob=w.bobS;it.sway=w.swS;it.squash=w.sqS;const sc=WOLF_SCALE;it.clock=clock;it.pulse=(.8+.2*Math.sin(clock*1.7+w.phase))*night;
-  const eyeL=WOLF_EYES[it.row*6+it.frame]||[];it.eyes=eyeL.map(([ex,ey])=>[w.x+(ex-WOLF_AX)*sc,w.y+(ey-WOLF_AY)*sc+(it.bob||0)]);
+  const eyeL=it.frame===WOLF_P.SLEEP?[]:(WOLF_EYES[it.row*16+it.frame]||[]);it.eyes=eyeL.map(([ex,ey])=>[w.x+ex*sc+(it.sway||0),w.y+ey*sc+(it.bob||0)]);
   if(!w.trail)w.trail=[];if(moving&&it.eyes.length)w.trail.push({t:clock,pts:it.eyes});
   while(w.trail.length&&clock-w.trail[0].t>.34)w.trail.shift();if(w.trail.length>12)w.trail.shift();
   it.trail=moving?w.trail.slice(0,-1):[];it.trailK=Math.min(1,w.v/40)*night;
@@ -2893,10 +2928,11 @@ function addWolfItems(queue,camX,camY,clock,viewRadius,solar){
 }
 function wolfPickTarget(w){const a=Math.random()*Math.PI*2;for(let k=0;k<6;k++){const d=70+Math.random()*130,ang=a+(k?(Math.random()-.5)*k*.9:0),x=w.x+Math.cos(ang)*d,y=w.y+Math.sin(ang)*d;if(griloSpotOk(x,y)){w.tx=x;w.ty=y;return true}}return false}
 function drawWolf(item,camX,camY){
- const w=item.ref,x=Math.round(w.x-camX),y=Math.round(w.y-camY),sc=WOLF_SCALE,W=WOLF_CW*sc,H=WOLF_CH*sc;
+ const w=item.ref,x=Math.round(w.x-camX),y=Math.round(w.y-camY),sc=WOLF_SCALE,fr=WOLF_FR[item.row*16+item.frame];if(!fr)return;
+ const sx=fr[0],sy=fr[1],fw=fr[2],fh=fr[3],ax=fr[4],ay=fr[5];
  ctx.save();ctx.globalAlpha=item.alpha;
- ctx.fillStyle='rgba(8,10,20,.30)';ctx.beginPath();ctx.ellipse(x,y+1,W*.24*(item.squash||1),H*.06,0,0,Math.PI*2);ctx.fill();
- ctx.drawImage(WOLF_IMG,item.frame*WOLF_CW,item.row*WOLF_CH,WOLF_CW,WOLF_CH,Math.round(x-WOLF_AX*sc+(item.sway||0)),Math.round(y-WOLF_AY*sc+(item.bob||0)),W,H);
+ ctx.fillStyle='rgba(8,10,20,.30)';ctx.beginPath();ctx.ellipse(x+(fw/2-ax)*sc*.6,y+1,fw*sc*.30*(item.squash||1),12*sc,0,0,Math.PI*2);ctx.fill();
+ ctx.drawImage(WOLF_IMG,sx,sy,fw,fh,Math.round(x-ax*sc+(item.sway||0)),Math.round(y-ay*sc+(item.bob||0)),fw*sc,fh*sc);
  ctx.restore();
  // luzes dos olhos e do rastro: entram na passagem de luz, depois da escuridão da noite
  if(item.trail&&item.trail.length&&item.trailK>.02){for(const sn of item.trail){const age=(item.clock-sn.t)/.34;const a=(1-age)*.45*item.trailK;if(a<=.01)continue;for(const p of sn.pts)WOLF_EYE_LIGHTS.push({x:p[0]-camX,y:p[1]-camY,R:6*sc+2,a})}}
