@@ -104,15 +104,19 @@ body.on-loading #settingsMenu,body.on-loading #skyArc,body.on-loading #hud,body.
 
 #worldMap{display:none;position:fixed;inset:0;z-index:60;background:rgba(5,8,6,.42);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);align-items:center;justify-content:center;padding:16px}
 #worldMap.open{display:flex}
-#worldMap .wrap{position:relative;max-width:100%;max-height:calc(100% - 120px)}
-#worldMap img{display:block;max-width:100%;max-height:calc(100vh - 150px);width:auto;height:auto;border-radius:28px;box-shadow:0 0 0 1px rgba(255,220,140,.25);opacity:.62}
+#worldMap .wrap{position:relative;display:flex;align-items:stretch;gap:12px;width:min(100%,960px);max-height:calc(100vh - 80px);padding:12px;border-radius:28px;background:rgba(10,14,10,.32);box-shadow:0 0 0 1px rgba(255,220,140,.18);box-sizing:border-box}
+#worldMap .mapFrame{position:relative;flex:1 1 0;min-width:0;line-height:0}
+#worldMap img{display:block;width:100%;max-height:calc(100vh - 104px);object-fit:contain;height:auto;border-radius:24px;box-shadow:0 0 0 1px rgba(255,220,140,.25);opacity:.62}
 .wmDot{position:absolute;width:5px;height:5px;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 0 2px rgba(0,0,0,.55)}
 .wmDot.npc{width:8px;height:8px;background:#6fb6ff;box-shadow:0 0 0 2px #0b1d33}
 .wmDot.ani{background:#ffd34d}
 .wmDot.pred{background:#ff7a3d}
 #worldMapMarker{position:absolute;width:12px;height:12px;border-radius:50%;background:#ff3b30;border:2px solid #fff;transform:translate(-50%,-50%);box-shadow:0 0 0 4px rgba(255,59,48,.35);pointer-events:none}
 #worldMapClose{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;padding:10px 16px;border-radius:999px;border:1px solid rgba(255,220,140,.5);background:rgba(20,14,8,.85);color:#f5e6b8;font:600 14px system-ui,sans-serif;cursor:pointer}
-#worldMapInfo{width:min(92%,460px);margin-top:12px;color:#f5e6b8;font:500 12.5px/1.5 system-ui,sans-serif;background:rgba(20,14,8,.6);padding:10px 14px;border-radius:18px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#worldMapInfo{flex:0 0 36%;min-width:0;align-self:center;color:#f5e6b8;font:500 11px/1.45 system-ui,sans-serif;background:rgba(20,14,8,.55);padding:10px 10px;border-radius:18px;overflow:hidden}
+#worldMapInfo .k{display:block;color:#ffe7a6;font-weight:600;font-size:10px;letter-spacing:.04em;text-transform:uppercase;margin-top:6px}
+#worldMapInfo .k:first-child{margin-top:0}
+#worldMapInfo .v{display:block;word-break:break-word}
 #worldMapInfo b{color:#ffe7a6;font-weight:600}
 </style></head>
 <body><div id="splash" role="status" aria-label="Carregando"><img class="spLogo" src="assets/a55f16ac5ad3.webp" alt="Ancestral Rei Fera"><img class="spItem" src="assets/827295dd12af.webp" alt=""></div><div id="titleScreen" role="dialog" aria-label="Menu inicial"><div id="tStage"><img id="tSceneSrc" class="tScene" alt="" src="assets/000aa78398b7.jpg"><canvas id="tFlies" aria-hidden="true"></canvas><img class="tLogo" src="assets/a55f16ac5ad3.webp" alt="Ancestral Rei Fera"><button class="tEntry" data-act="continue" style="left:69.08%;top:39.32%"><span class="ripple"></span><span class="ripple r2"></span><span class="ripple r3"></span><img class="tPlate" src="assets/0a895145a12c.webp" alt=""><img class="tLeaf" src="assets/827295dd12af.webp" alt=""><span class="tIcon"><img src="assets/cdba5b6dd2ea.webp" alt=""></span></button><button class="tEntry" data-act="new" style="left:69.38%;top:49.10%"><span class="ripple"></span><span class="ripple r2"></span><span class="ripple r3"></span><img class="tPlate" src="assets/8e6a1766517a.webp" alt=""><img class="tLeaf" src="assets/827295dd12af.webp" alt=""><span class="tIcon"><img src="assets/c0d1c4d7b22e.webp" alt=""></span></button><button class="tEntry" data-act="options" style="left:69.38%;top:58.98%"><span class="ripple"></span><span class="ripple r2"></span><span class="ripple r3"></span><img class="tPlate" src="assets/074c75ada5bf.webp" alt=""><img class="tLeaf" src="assets/827295dd12af.webp" alt=""><span class="tIcon"><img src="assets/90c02e8bf850.webp" alt=""></span></button><button class="tEntry" data-act="credits" style="left:69.38%;top:68.87%"><span class="ripple"></span><span class="ripple r2"></span><span class="ripple r3"></span><img class="tPlate" src="assets/6e520bc9aba3.webp" alt=""><img class="tLeaf" src="assets/827295dd12af.webp" alt=""><span class="tIcon"><img src="assets/ab1b8d6c26c3.webp" alt=""></span></button><div class="tPress">Toque para começar</div><div id="titleInfo" role="dialog" aria-modal="true"><h2 id="tiTitle"></h2><p id="tiText"></p><button id="tiBack" type="button">Voltar</button></div></div></div>
@@ -122,8 +126,7 @@ body.on-loading #settingsMenu,body.on-loading #skyArc,body.on-loading #hud,body.
 <div id="hud"><div class="pill">ANCESTRAL · BOSQUE DE ÂMBAR</div><div class="pill" id="status" title="Dia e noite sincronizados com o Open-Meteo">Jin · explorando</div></div><div class="pill" id="solarStatus">Noite · local</div><div id="skyArc" aria-hidden="true"></div>
 <div id="hint">WASD / setas para andar · Shift para correr · Espaço para pular</div>
 <div id="worldMap" role="dialog" aria-modal="true" aria-label="Mapa do Bosque de Âmbar">
-<div class="wrap"><img id="worldMapImg" src="assets/mapa_terreno.jpg" alt="Mapa do Bosque de Âmbar"><div id="worldMapMarker" aria-hidden="true"></div></div>
-<div id="worldMapInfo" aria-live="off"></div>
+<div class="wrap"><div id="worldMapInfo" aria-live="off"></div><div class="mapFrame"><img id="worldMapImg" src="assets/mapa_terreno.jpg" alt="Mapa do Bosque de Âmbar"><div id="worldMapMarker" aria-hidden="true"></div></div></div>
 <button id="worldMapClose" type="button">Fechar</button>
 </div>
 <div id="settingsMenu"><button id="settingsButton" type="button" aria-label="Abrir configurações" aria-expanded="false" aria-controls="settingsPanel">⚙</button><div id="settingsPanel" role="group" aria-label="Configurações"><div class="setting-row"><span>Hora do bioma</span><select class="setting-select" id="timeOfDayMode" aria-label="Fase do dia para teste"><option value="auto">Automático</option><option value="dawn">Amanhecer</option><option value="morning">Manhã</option><option value="day">Dia</option><option value="noon">Meio-dia</option><option value="afternoon">Tarde</option><option value="sunset">Pôr do sol</option><option value="twilight">Crepúsculo</option><option value="night">Noite</option></select></div><div class="setting-row"><span>Tela cheia</span><button class="setting-toggle" id="fullscreenToggle" type="button" role="switch" aria-checked="false" aria-label="Tela cheia"></button></div><div class="setting-row"><span>Animação da água</span><button class="setting-toggle" id="waterAnimationToggle" type="button" role="switch" aria-checked="true" aria-label="Animação da água"></button></div><div class="setting-row"><span>Animação das árvores</span><button class="setting-toggle" id="treeAnimationToggle" type="button" role="switch" aria-checked="true" aria-label="Animação das árvores"></button></div><div class="setting-row"><span>Animação das plantas</span><button class="setting-toggle" id="plantAnimationToggle" type="button" role="switch" aria-checked="true" aria-label="Animação das plantas"></button></div><div class="setting-row"><span>Clima</span><button id="weatherModeBtn" class="setting-pick" type="button">Automático</button></div><div class="setting-row"><span>DBG</span><button class="setting-toggle" id="debugToggle" type="button" role="switch" aria-checked="false" aria-label="Modo de depuração"></button></div><div class="setting-row"><span>Qualidade árvores</span><select class="setting-select" id="qualityTrees" aria-label="Qualidade árvores"><option value="auto">Automático</option><option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option></select></div><div class="setting-row"><span>Qualidade movimento</span><select class="setting-select" id="qualityMotion" aria-label="Qualidade movimento"><option value="auto">Automático</option><option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option></select></div><div class="setting-row"><span>Qualidade água</span><select class="setting-select" id="qualityWater" aria-label="Qualidade água"><option value="auto">Automático</option><option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option></select></div><div class="setting-row"><span>Qualidade pixels</span><select class="setting-select" id="qualityPixels" aria-label="Qualidade pixels"><option value="auto">Automático</option><option value="baixa">Baixa</option><option value="media">Média</option><option value="alta">Alta</option></select></div><div class="setting-row"><span>Luz</span><button class="setting-toggle" id="lightToggle" type="button" role="switch" aria-checked="true" aria-label="Iluminação e sombras"></button></div></div></div><div id="controls"><div id="stick"><div id="nub"></div></div><div id="buttons"><button class="action" id="jump">PULAR</button><button class="action" id="run">CORRER</button></div></div>
@@ -3216,7 +3219,7 @@ function audioFrame(){
   const map=document.getElementById('worldMap'),mk=document.getElementById('worldMapMarker'),close=document.getElementById('worldMapClose'),info=document.getElementById('worldMapInfo'),sky=document.getElementById('skyArc');
   if(!map||!sky)return;
   let timer=null;
-  const dotsBox=document.createElement('div');dotsBox.style.cssText='position:absolute;inset:0;pointer-events:none';document.querySelector('#worldMap .wrap').appendChild(dotsBox);
+  const dotsBox=document.createElement('div');dotsBox.style.cssText='position:absolute;inset:0;pointer-events:none';document.querySelector('#worldMap .mapFrame').appendChild(dotsBox);
   const dotPool=[];
   function dot(i,x,y,cls){let d=dotPool[i];if(!d){d=document.createElement('div');d.className='wmDot';dotsBox.appendChild(d);dotPool[i]=d}d.className='wmDot '+cls;d.style.left=(x/MAP_W*100)+'%';d.style.top=(y/MAP_H*100)+'%';d.hidden=false;return i+1}
   function fmtHour(tz){try{return new Intl.DateTimeFormat('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:tz}).format(new Date())}catch(e){return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}}
@@ -3225,13 +3228,14 @@ function audioFrame(){
     if(!info)return;
     const w=window.weatherExtra,tz=(typeof weatherTimezone!=='undefined'&&weatherTimezone)||'';
     const lat=typeof weatherLat!=='undefined'?weatherLat:null,lon=typeof weatherLon!=='undefined'?weatherLon:null;
-    const lines=[];
-    lines.push('<b>Hora</b> '+fmtHour(tz||undefined)+(tz?' · '+tz.split('/').pop().replace(/_/g,' '):''));
-    if(lat!=null&&lon!=null)lines.push('<b>Latitude</b> '+coord(lat,'N','S')+' · <b>Longitude</b> '+coord(lon,'L','O')+(w&&w.elev!=null?' · <b>Altitude</b> '+Math.round(w.elev)+' m':''));
-    if(w){lines.push('<b>Agora</b> '+wmoLabel(w.code)+' · '+Math.round(w.temp)+'°C · vento '+Math.round(w.wind)+' km/h · umidade '+Math.round(w.hum)+'%');
-      if(w.outlook&&w.outlook.length)lines.push('<b>Próximas horas</b> '+w.outlook.map(o=>o.t+' '+wmoLabel(o.code)+' '+Math.round(o.temp)+'°').join(' · '))}
-    else lines.push('<b>Clima</b> '+(typeof weatherState==='string'?weatherState:'carregando…'));
-    info.innerHTML=lines.join('<br>');
+    const k=(t,v)=>'<span class="k">'+t+'</span><span class="v">'+v+'</span>';
+    const parts=[k('Hora',fmtHour(tz||undefined)+(tz?'<br>'+tz.split('/').pop().replace(/_/g,' '):''))];
+    if(lat!=null&&lon!=null)parts.push(k('Latitude',coord(lat,'N','S')),k('Longitude',coord(lon,'L','O')));
+    if(w&&w.elev!=null)parts.push(k('Altitude',Math.round(w.elev)+' m'));
+    if(w){parts.push(k('Clima',wmoLabel(w.code)+'<br>'+Math.round(w.temp)+'°C'),k('Vento',Math.round(w.wind)+' km/h'),k('Umidade',Math.round(w.hum)+'%'));
+      if(w.outlook&&w.outlook.length)parts.push(k('Próximas horas',w.outlook.map(o=>o.t+' · '+wmoLabel(o.code)+' · '+Math.round(o.temp)+'°').join('<br>')))}
+    else parts.push(k('Clima',typeof weatherState==='string'?weatherState:'carregando…'));
+    info.innerHTML=parts.join('');
   }
   function place(){try{if(typeof player==='undefined'||typeof MAP_W==='undefined')return;mk.style.left=(player.x/MAP_W*100)+'%';mk.style.top=(player.y/MAP_H*100)+'%';
     const list=[];
