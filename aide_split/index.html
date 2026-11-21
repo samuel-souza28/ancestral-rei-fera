@@ -104,18 +104,20 @@ body.on-loading #settingsMenu,body.on-loading #skyArc,body.on-loading #hud,body.
 
 #worldMap{display:none;position:fixed;inset:0;z-index:60;background:rgba(5,8,6,.42);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);align-items:center;justify-content:center;padding:16px}
 #worldMap.open{display:flex}
-#worldMap .wrap{position:relative;display:flex;align-items:stretch;gap:12px;width:min(100%,960px);max-height:calc(100vh - 80px);padding:12px;border-radius:28px;background:rgba(10,14,10,.32);box-shadow:0 0 0 1px rgba(255,220,140,.18);box-sizing:border-box}
-#worldMap .mapFrame{position:relative;flex:1 1 0;min-width:0;line-height:0}
-#worldMap img{display:block;width:100%;max-height:calc(100vh - 104px);object-fit:contain;height:auto;border-radius:24px;box-shadow:0 0 0 1px rgba(255,220,140,.25);opacity:.62}
+#worldMap .wrap{position:relative;display:flex;align-items:stretch;gap:12px;width:min(100%,960px);max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);padding:12px;border-radius:28px;background:rgba(10,14,10,.32);box-shadow:0 0 0 1px rgba(255,220,140,.18);box-sizing:border-box}
+#worldMap .mapFrame{position:relative;flex:1 1 0;min-width:0;line-height:0;display:flex;align-items:center}
+#worldMap img{display:block;width:100%;object-fit:contain;height:auto;border-radius:24px;box-shadow:0 0 0 1px rgba(255,220,140,.25);opacity:.62}
 .wmDot{position:absolute;width:5px;height:5px;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 0 2px rgba(0,0,0,.55)}
 .wmDot.npc{width:8px;height:8px;background:#6fb6ff;box-shadow:0 0 0 2px #0b1d33}
 .wmDot.ani{background:#ffd34d}
 .wmDot.pred{background:#ff7a3d}
 #worldMapMarker{position:absolute;width:12px;height:12px;border-radius:50%;background:#ff3b30;border:2px solid #fff;transform:translate(-50%,-50%);box-shadow:0 0 0 4px rgba(255,59,48,.35);pointer-events:none}
 #worldMapClose{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;padding:10px 16px;border-radius:999px;border:1px solid rgba(255,220,140,.5);background:rgba(20,14,8,.85);color:#f5e6b8;font:600 14px system-ui,sans-serif;cursor:pointer}
-#worldMapInfo{flex:0 0 36%;min-width:0;align-self:center;color:#f5e6b8;font:500 11px/1.45 system-ui,sans-serif;background:rgba(20,14,8,.55);padding:10px 10px;border-radius:18px;overflow:hidden}
-#worldMapInfo .k{display:block;color:#ffe7a6;font-weight:600;font-size:10px;letter-spacing:.04em;text-transform:uppercase;margin-top:6px}
-#worldMapInfo .k:first-child{margin-top:0}
+#worldMapInfo{flex:0 0 36%;min-width:0;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow-y:auto;color:#f5e6b8;font:500 11px/1.35 system-ui,sans-serif;background:rgba(20,14,8,.55);padding:8px 9px;border-radius:18px;display:grid;grid-template-columns:1fr;gap:7px 8px;align-content:start;box-sizing:border-box}
+@media (min-aspect-ratio:1/1){#worldMapInfo{flex-basis:46%;grid-template-columns:1fr 1fr}}
+#worldMapInfo .it{min-width:0}
+#worldMapInfo .it.span2{grid-column:1/-1}
+#worldMapInfo .k{display:block;color:#ffe7a6;font-weight:600;font-size:9px;letter-spacing:.05em;text-transform:uppercase}
 #worldMapInfo .v{display:block;word-break:break-word}
 #worldMapInfo b{color:#ffe7a6;font-weight:600}
 </style></head>
@@ -3228,12 +3230,12 @@ function audioFrame(){
     if(!info)return;
     const w=window.weatherExtra,tz=(typeof weatherTimezone!=='undefined'&&weatherTimezone)||'';
     const lat=typeof weatherLat!=='undefined'?weatherLat:null,lon=typeof weatherLon!=='undefined'?weatherLon:null;
-    const k=(t,v)=>'<span class="k">'+t+'</span><span class="v">'+v+'</span>';
+    const k=(t,v,wide)=>'<div class="it'+(wide?' span2':'')+'"><span class="k">'+t+'</span><span class="v">'+v+'</span></div>';
     const parts=[k('Hora',fmtHour(tz||undefined)+(tz?'<br>'+tz.split('/').pop().replace(/_/g,' '):''))];
     if(lat!=null&&lon!=null)parts.push(k('Latitude',coord(lat,'N','S')),k('Longitude',coord(lon,'L','O')));
     if(w&&w.elev!=null)parts.push(k('Altitude',Math.round(w.elev)+' m'));
     if(w){parts.push(k('Clima',wmoLabel(w.code)+'<br>'+Math.round(w.temp)+'°C'),k('Vento',Math.round(w.wind)+' km/h'),k('Umidade',Math.round(w.hum)+'%'));
-      if(w.outlook&&w.outlook.length)parts.push(k('Próximas horas',w.outlook.map(o=>o.t+' · '+wmoLabel(o.code)+' · '+Math.round(o.temp)+'°').join('<br>')))}
+      if(w.outlook&&w.outlook.length)parts.push(k('Próximas horas',w.outlook.map(o=>o.t+' · '+wmoLabel(o.code)+' · '+Math.round(o.temp)+'°').join('<br>'),true))}
     else parts.push(k('Clima',typeof weatherState==='string'?weatherState:'carregando…'));
     info.innerHTML=parts.join('');
   }
