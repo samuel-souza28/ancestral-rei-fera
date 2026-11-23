@@ -2857,6 +2857,8 @@ function drawAmberRootLayers(camX,camY,solar){
   if(t.v<AMBER_V0)continue;const g=amberGeom(t,camX,camY),art=g.art,A=g.A;if(!A)continue;
   if(lightingEnabled&&!qualLowFor('trees')&&solar&&solar.daylight>.02)drawTreeShadowSoft(t,t.x-camX,t.y-camY,solar);
  }
+ // a pedra da colina cobre as sombras (do Jin e das árvores): redesenha a base por cima delas
+ drawHillBase(camX,camY);
 }
 function drawTree(t,camX,camY,animationClock,solar,part){
  if(t.v<AMBER_V0){drawTreeBase(t,camX,camY,animationClock,solar,part);return}
