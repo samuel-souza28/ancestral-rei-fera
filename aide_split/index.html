@@ -1049,9 +1049,12 @@ function drawHillGrass(camX,camY){
 // Colina inteira numa imagem só (montada uma vez a partir do atlas), desenhada no chão: sem emendas entre camadas.
 // As camadas da fila de cena só são redesenhadas por cima onde precisam cobrir o Jin (pixels idênticos aos de baixo).
 let hillBaseCanvas=null;
+// Pedra visível é sólida: junta às linhas de colisão todo pixel de pedra opaco da base,
+// para o pé nunca parar dentro de uma face que aparece na tela (uma vez, ao montar a base).
+function hillSolidFromAlpha(c){const d=c.getContext('2d').getImageData(0,0,HILL.w,HILL.h).data;for(let y=0;y<HILL.h;y++){const runs=[];let s=-1;for(let x=0;x<=HILL.w;x++){const on=x<HILL.w&&d[(y*HILL.w+x)*4+3]>=128;if(on&&s<0)s=x;else if(!on&&s>=0){runs.push([s,x]);s=-1}}if(!runs.length)continue;const all=(HILL.rows[y]||[]).concat(runs).sort((a,b)=>a[0]-b[0]);const merged=[];for(const r of all){const last=merged[merged.length-1];if(last&&r[0]<=last[1])last[1]=Math.max(last[1],r[1]);else merged.push([r[0],r[1]])}HILL.rows[y]=merged}}
 function drawHillBase(camX,camY){
  if(HILL.ox>camX+vw||HILL.ox+HILL.w<camX||HILL.oy>camY+vh||HILL.oy+HILL.h<camY)return;
- if(!hillBaseCanvas){const im=img.colinaPecas;if(!im||!im.complete||!im.naturalWidth)return;const c=document.createElement('canvas');c.width=HILL.w;c.height=HILL.h;const x=c.getContext('2d');x.imageSmoothingEnabled=false;for(const p of HILL.pieces)x.drawImage(im,p.sx,p.sy,p.w,p.h,p.x,p.y,p.w,p.h);hillBaseCanvas=c}
+ if(!hillBaseCanvas){const im=img.colinaPecas;if(!im||!im.complete||!im.naturalWidth)return;const c=document.createElement('canvas');c.width=HILL.w;c.height=HILL.h;const x=c.getContext('2d');x.imageSmoothingEnabled=false;for(const p of HILL.pieces)x.drawImage(im,p.sx,p.sy,p.w,p.h,p.x,p.y,p.w,p.h);hillBaseCanvas=c;hillSolidFromAlpha(c)}
  ctx.drawImage(hillBaseCanvas,Math.round(HILL.ox-camX),Math.round(HILL.oy-camY));
 }
 function hillFootprintHit(x,y,m){m=m||0;return x>=HILL.ox-m&&x<=HILL.ox+HILL.w+m&&y>=HILL.oy-m&&y<=HILL.oy+HILL.h+m}
