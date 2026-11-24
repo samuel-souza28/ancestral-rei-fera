@@ -1086,8 +1086,8 @@ function buildHillLevels(){const W=HILL.w,H=HILL.h,N=W*H,M=new Uint8Array(N);
  // faixa livre atrás da colina: a grama do terraço do meio é andável no chão (pedra continua sólida)
  const fb=HILL_BEHIND.freeBand;if(fb){for(let y=Math.max(0,fb.y0);y<Math.min(H,fb.y1);y++){const runs=HILL.grass[y];if(!runs)continue;for(const r of runs){const x0=Math.max(fb.x0,r[0]),x1=Math.min(fb.x1,r[1]);for(let x=x0;x<x1;x++)G[y*W+x]=0}}}
  // trechos verticais da colina por coluna (para saber o que fica na frente do Jin)
- // só a pedra entra nos trechos de cobertura: a grama do terraço não cobre quem está em pé nela
- const R=new Uint8Array(N);HILL.rows.forEach((runs,y)=>{if(runs)for(const r of runs)R.fill(1,y*W+Math.max(0,r[0]),y*W+Math.min(W,r[1]))});
+ // só a pedra que bloqueia entra nos trechos de cobertura: pedra por onde o Jin pisa (beirada do caminho) não cobre quem está em pé nela
+ const R=new Uint8Array(N);HILL.rows.forEach((runs,y)=>{if(runs)for(const r of runs)R.fill(1,y*W+Math.max(0,r[0]),y*W+Math.min(W,r[1]))});for(let i=0;i<N;i++)if(R[i]&&!G[i])R[i]=0;
  const segs=new Array(W);for(let x=0;x<W;x++){const s=[];let t=-1;for(let y=0;y<=H;y++){const on=y<H&&R[y*W+x];if(on&&t<0)t=y;else if(!on&&t>=0){s.push(t,y);t=-1}}segs[x]=s}
  hillLv={M,O,G,segs}}
 function hillGroundBlocked(px,py){const W=HILL.w,G=hillLv.G,fl=px-HILL.ox-PLAYER_FOOT_W/2,fr=px-HILL.ox+PLAYER_FOOT_W/2,ft=py-HILL.oy-PLAYER_FOOT_H,fb=py-HILL.oy;if(fr<=0||fl>=W||fb<=0||ft>=HILL.h)return false;const x0=Math.max(0,Math.floor(fl)),x1=Math.min(W,Math.ceil(fr)),y0=Math.max(0,Math.floor(ft)),y1=Math.min(HILL.h,Math.ceil(fb));for(let y=y0;y<y1;y++){const o=y*W;for(let x=x0;x<x1;x++)if(G[o+x])return true}return false}
