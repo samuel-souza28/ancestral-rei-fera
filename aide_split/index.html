@@ -1057,7 +1057,15 @@ function hillSolidFromAlpha(c){const d=c.getContext('2d').getImageData(0,0,HILL.
 // O Jin tem dois níveis: 0 = chão em volta da colina; 1 = patamares e escadas. Troca só pela escada de baixo.
 // No chão, a colina é sólida, menos uma faixa logo abaixo de cada borda de cima voltada para fora (lados e fundo):
 // ali o Jin passa por trás da colina, e a colina é desenhada por cima dele (MD Supremo §4.1: ordem por Y).
-const HILL_BEHIND={depth:52,frontMargin:40,bottomStair:3};
+// Caminhos por trás da montanha (desenho do autor de 24/11, ajustado ao mapa medido; coordenadas locais da colina).
+// Pés do Jin no chão, escondido pela montanha. Corredor de 2×halfWidth px em volta de cada linha.
+const HILL_BEHIND={depth:0,frontMargin:40,bottomStair:3,halfWidth:18,paths:[
+ // passagem por trás: entra pelo chão da esquerda, cruza por trás da parede de cima, sai pelo chão da direita
+ [[330,545],[381,499],[461,467],[541,446],[621,431],[741,421],[861,411],[941,409],[1021,415],[1101,440],[1160,462]],
+ // flanco esquerdo: do chão da ponta esquerda, por trás do muro de baixo e da ponta do muro do meio, até a passagem
+ [[70,1000],[118,953],[158,925],[238,893],[318,877],[334,840],[340,750],[344,670],[343,600],[330,545]],
+ // flanco direito: do vão de terra da direita, por trás da ponta do muro do meio e da borda de baixo, até o chão da direita
+ [[1105,560],[1068,599],[1064,639],[1062,719],[1062,781],[1102,798],[1142,814],[1195,838]]]};
 let hillLv=null,hillCollideLevel=1;
 function buildHillLevels(){const W=HILL.w,H=HILL.h,N=W*H,M=new Uint8Array(N);
  HILL.rows.forEach((runs,y)=>{if(runs)for(const r of runs)M.fill(1,y*W+Math.max(0,r[0]),y*W+Math.min(W,r[1]))});
@@ -1069,9 +1077,12 @@ function buildHillLevels(){const W=HILL.w,H=HILL.h,N=W*H,M=new Uint8Array(N);
  while(qh<qt){const i=q[qh++],x=i%W;if(x>0)push(i-1);if(x<W-1)push(i+1);if(i>=W)push(i-W);if(i<N-W)push(i+W)}
  // faixa por trás: abaixo de cada pixel da colina que tem chão de fora logo acima
  const O=new Uint8Array(N),D=HILL_BEHIND.depth;
- for(let i=0;i<N;i++){if(!M[i]||(i>=W&&!E[i-W]))continue;for(let k=0,j=i;k<D&&j<N&&M[j];k++,j+=W)O[j]=1}
+ if(D>0)for(let i=0;i<N;i++){if(!M[i]||(i>=W&&!E[i-W]))continue;for(let k=0,j=i;k<D&&j<N&&M[j];k++,j+=W)O[j]=1}
+ // corredores dos caminhos por trás (só onde há colina; o chão de fora já é livre)
+ const hw=HILL_BEHIND.halfWidth;for(const path of HILL_BEHIND.paths)for(let s=0;s+1<path.length;s++){const [ax,ay]=path[s],[bx,by]=path[s+1],dx=bx-ax,dy=by-ay,L2=dx*dx+dy*dy||1;
+  for(let y=Math.max(0,Math.floor(Math.min(ay,by)-hw));y<=Math.min(H-1,Math.ceil(Math.max(ay,by)+hw));y++)for(let x=Math.max(0,Math.floor(Math.min(ax,bx)-hw));x<=Math.min(W-1,Math.ceil(Math.max(ax,bx)+hw));x++){const t=Math.max(0,Math.min(1,((x+.5-ax)*dx+(y+.5-ay)*dy)/L2)),ex=x+.5-ax-t*dx,ey=y+.5-ay-t*dy;if(ex*ex+ey*ey<=hw*hw&&M[y*W+x])O[y*W+x]=1}}
  const G=new Uint8Array(N);for(let i=0;i<N;i++)G[i]=M[i]&&!O[i]?1:0;
- for(let k=0;k<stairPx.length;k+=2)G[stairPx[k]]=stairPx[k+1]===HILL_BEHIND.bottomStair?0:1;
+ for(let k=0;k<stairPx.length;k+=2)G[stairPx[k]]=stairPx[k+1]===HILL_BEHIND.bottomStair||O[stairPx[k]]?0:1;
  // trechos verticais da colina por coluna (para saber o que fica na frente do Jin)
  const segs=new Array(W);for(let x=0;x<W;x++){const s=[];let t=-1;for(let y=0;y<=H;y++){const on=y<H&&M[y*W+x];if(on&&t<0)t=y;else if(!on&&t>=0){s.push(t,y);t=-1}}segs[x]=s}
  hillLv={M,O,G,segs}}
@@ -1110,7 +1121,7 @@ function hillBlockedAt(px,py){if(hillCollideLevel===0&&hillLv)return hillGroundB
 function hillPtInPoly(x,y,poly){let c=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[i],b=poly[j];if((a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])c=!c}return c}
 function hillStairsTier(px,py){const lx=px-HILL.ox,ly=py-HILL.oy;if(lx<0||ly<0||lx>HILL.w||ly>HILL.h)return -1;for(const t in HILL.stairs)for(const poly of HILL.stairs[t])if(hillPtInPoly(lx,ly,poly))return +t;return -1}
 // Escada da colina: dentro do corredor dos degraus, as setas para cima/baixo seguem a inclinação da escada.
-function hillStairSteer(v){const t=hillStairsTier(player.x,player.y);if(t<0||Math.abs(v.y)<.3)return v;const p=HILL.stairs[t][0],ax=(p[3][0]-p[0][0]),ay=(p[3][1]-p[0][1]),l=Math.hypot(ax,ay),m=Math.hypot(v.x,v.y),d=v.y>0?1:-1;return{x:ax/l*m*d,y:ay/l*m*d}}
+function hillStairSteer(v){const t=hillStairsTier(player.x,player.y);if(t<0||Math.abs(v.y)<.3||player.hillLevel===0)return v;const p=HILL.stairs[t][0],ax=(p[3][0]-p[0][0]),ay=(p[3][1]-p[0][1]),l=Math.hypot(ax,ay),m=Math.hypot(v.x,v.y),d=v.y>0?1:-1;return{x:ax/l*m*d,y:ay/l*m*d}}
 function hillQueueVisible(q,camX,camY){if(!player||!(HILL.ox<camX+vw&&HILL.ox+HILL.w>camX&&HILL.oy<camY+vh&&HILL.oy+HILL.h>camY))return;const lx=player.x-HILL.ox,ly=player.y-HILL.oy,lift=Math.max(0,player.jumpZ||0),rx0=lx-46,rx1=lx+46,ry0=ly-134-lift,ry1=ly+8;if(rx1<0||rx0>HILL.w||ry1<0||ry0>HILL.h)return;const st=hillStairsTier(player.x,player.y);let s0=1e9,s1=-1e9;if(st>0){const sp=HILL.stairs[st][0];s0=Math.min(sp[0][1],sp[1][1])-12;s1=Math.max(sp[2][1],sp[3][1])+12}for(const p of HILL.pieces){if(p.b<=ly)continue;if(p.b>=s0&&p.b<=s1)continue;if(p.x>rx1||p.x+p.w<rx0||p.y>ry1||p.y+p.h<ry0)continue;p._it.y=HILL.oy+p.b;q.push(p._it)}}
 function drawHillPiece(item,camX,camY){const p=item.piece,im=img.colinaPecas;if(!im||!im.complete)return;ctx.drawImage(im,p.sx,p.sy,p.w,p.h,Math.round(HILL.ox+p.x-camX),Math.round(HILL.oy+p.y-camY),p.w,p.h)}
 function footBlockedBy(px,py){if(hillBlockedAt(px,py))return HILL_COLLIDER;if(JUP.placed&&Math.hypot(px-JUP.x,py-JUP.y)<14)return JUP_COLLIDER;if(hiveBlockedAt(px,py)||hiveBlockedAt(px-8,py)||hiveBlockedAt(px+8,py))return HIVE_COLLIDER;if(fruitTreeBlockedAt(px,py))return FRUIT_COLLIDER;if(bushBlockedAt(px,py))return BUSH_COLLIDER;if(riverFeetBlocked(px,py))return RIVER_COLLIDER;const orient=(a,b,c)=>(b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x),onSegment=(a,b,p)=>Math.abs(orient(a,b,p))<1e-9&&p.x>=Math.min(a.x,b.x)-1e-9&&p.x<=Math.max(a.x,b.x)+1e-9&&p.y>=Math.min(a.y,b.y)-1e-9&&p.y<=Math.max(a.y,b.y)+1e-9,segmentsIntersect=(a,b,c,d)=>{const o1=orient(a,b,c),o2=orient(a,b,d),o3=orient(c,d,a),o4=orient(c,d,b);return(o1>0&&o2<0||o1<0&&o2>0)&&(o3>0&&o4<0||o3<0&&o4>0)||onSegment(a,b,c)||onSegment(a,b,d)||onSegment(c,d,a)||onSegment(c,d,b)};for(const t of treeItems){const sw=t.w;if(Math.abs(py-t.y)>120||Math.abs(px-t.x)>sw/2+20)continue;const footW=t.v===5||t.v===6?24:PLAYER_FOOT_W,footH=t.v===5||t.v===6?12:PLAYER_FOOT_H,left=px-footW/2,right=px+footW/2,top=py-footH,bottom=py,points=[[left,top],[right,top],[left,bottom],[right,bottom],[px,(top+bottom)/2]],rectEdges=[[[left,top],[right,top]],[[right,top],[right,bottom]],[[right,bottom],[left,bottom]],[[left,bottom],[left,top]]],poly=t.poly;if(points.some(([x,y])=>pointInPolygon(x,y,poly)))return t;for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length];if(a.x>=left&&a.x<=right&&a.y>=top&&a.y<=bottom)return t;for(const [c,d] of rectEdges)if(segmentsIntersect(a,b,{x:c[0],y:c[1]},{x:d[0],y:d[1]}))return t}}for(const r of groundRocks){const b=r.collisionBounds;if(!r.collider||!b)continue;if(px+PLAYER_FOOT_W/2<b.minX||px-PLAYER_FOOT_W/2>b.maxX||py<b.minY||py-PLAYER_FOOT_H>b.maxY)continue;if(polygonIntersectsFoot(r.collider,px,py))return r}return null}function feetWithinWorld(px,py){return px-PLAYER_FOOT_W/2>=0&&px+PLAYER_FOOT_W/2<=WORLD_W&&py-PLAYER_FOOT_H>=0&&py<=WORLD_H}
