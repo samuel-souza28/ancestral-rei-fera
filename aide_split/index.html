@@ -1091,6 +1091,15 @@ function drawHillOverlay(camX,camY){if(!hillLv||!hillBaseCanvas||player.hillLeve
  if(any){ctx.clip();const w=x1-x0,h=y1-y0;if(hillGrassCanvas)ctx.drawImage(hillGrassCanvas,x0,y0,w,h,dx+x0,dy+y0,w,h);ctx.drawImage(hillBaseCanvas,x0,y0,w,h,dx+x0,dy+y0,w,h)}
  ctx.restore()}
 const HILL_OVER_ITEM={kind:16,ref:null,y:0,priority:2.5};
+// Sombra da colina pelo sol real: a silhueta da pedra é projetada na direção e no tamanho do sol
+// (solarLightingAtMinute, que segue o horário real). Cacheada por faixa de sol; desenhada antes da base.
+const HILL_SHADOW_H=150;let HILL_SHADOW_CACHE={key:'',c:null,pad:0};
+function hillCastShadowCanvas(solar){const L=HILL_SHADOW_H*solar.shadowScale,dx=solar.shadowX*L,dy=solar.shadowY*L,op=Math.min(.5,solar.shadowOpacity*.8);const key=[Math.round(dx/3),Math.round(dy/3),Math.round(op*20)].join(',');if(HILL_SHADOW_CACHE.key===key)return HILL_SHADOW_CACHE;
+ const pad=Math.ceil(Math.max(Math.abs(dx),Math.abs(dy)))+4,c=document.createElement('canvas');c.width=HILL.w+pad*2;c.height=HILL.h+pad*2;const g=c.getContext('2d');
+ const sil=document.createElement('canvas');sil.width=HILL.w;sil.height=HILL.h;const sg=sil.getContext('2d');sg.drawImage(hillBaseCanvas,0,0);sg.globalCompositeOperation='source-in';sg.fillStyle='rgb(8,14,16)';sg.fillRect(0,0,HILL.w,HILL.h);
+ const steps=24;g.globalAlpha=op*.04;for(let i=0;i<=steps;i++){const t=i/steps;g.drawImage(sil,Math.round(pad+dx*t),Math.round(pad+dy*t))}
+ HILL_SHADOW_CACHE={key,c,pad};return HILL_SHADOW_CACHE}
+function drawHillCastShadow(camX,camY,solar){if(!hillBaseCanvas||!solar||solar.daylight<=.02||!lightingEnabled)return;const h=hillCastShadowCanvas(solar);ctx.drawImage(h.c,Math.round(HILL.ox-h.pad-camX),Math.round(HILL.oy-h.pad-camY))}
 function drawHillBase(camX,camY){
  if(HILL.ox>camX+vw||HILL.ox+HILL.w<camX||HILL.oy>camY+vh||HILL.oy+HILL.h<camY)return;
  if(!hillBaseCanvas){const im=img.colinaPecas;if(!im||!im.complete||!im.naturalWidth)return;const c=document.createElement('canvas');c.width=HILL.w;c.height=HILL.h;const x=c.getContext('2d');x.imageSmoothingEnabled=false;for(const p of HILL.pieces)x.drawImage(im,p.sx,p.sy,p.w,p.h,p.x,p.y,p.w,p.h);hillBaseCanvas=c;hillSolidFromAlpha(c)}
@@ -2900,6 +2909,7 @@ function drawAmberRootLayers(camX,camY,solar){
   if(lightingEnabled&&!qualLowFor('trees')&&solar&&solar.daylight>.02)drawTreeShadowSoft(t,t.x-camX,t.y-camY,solar);
  }
  // a pedra da colina cobre as sombras (do Jin e das árvores): redesenha a base por cima delas
+ drawHillCastShadow(camX,camY,solar);
  if(player&&player.hillLevel===0)drawHillGrass(camX,camY);
  drawHillBase(camX,camY);
 }
